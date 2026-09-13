@@ -1,0 +1,55 @@
+name: C2AI Python App Deploy
+
+# workflow_dispatch returns 204 (no run id), so Athena correlates the run by
+# finding the deployment_id inside the run name. Keep this line.
+run-name: c2ai-deploy ${{ inputs.deployment_id }}
+
+on:
+  # Lets you test the workflow by hand from the Actions tab / curl.
+  workflow_dispatch:
+    inputs:
+      # Athena ALWAYS sends these two on a workflow_dispatch deploy.
+      # They MUST be declared or GitHub rejects the trigger with HTTP 422.
+      provider:
+        description: "Athena tier, e.g. tier1"
+        required: false
+        type: string
+      deployment_id:
+        description: "Athena deployment correlation id"
+        required: false
+        type: string
+      # The deploy wizard's Version/tag selection is sent as a `branch` input.
+      # It MUST be declared or GitHub rejects the dispatch with 422.
+      branch:
+        description: "Version/ref selected in the Athena deploy wizard"
+        required: false
+        type: string
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Show what Athena sent
+        run: |
+          echo "provider=${{ inputs.provider }}"
+          echo "deployment_id=${{ inputs.deployment_id }}"
+          echo "branch=${{ inputs.branch }}"
+
+      # Adjust the filename below if your script is not called main.py.
+      - name: Run the app
+        run: python app.py
+
+      - name: Upload deploy proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-proof-${{ inputs.deployment_id }}
+          path: deploy-proof.txt
+          if-no-files-found: warn
