@@ -45,7 +45,7 @@ jobs:
 
       # Adjust the filename below if your script is not called main.py.
       - name: Run the app
-        run: python app.py
+        run: python main.py
 
       - name: Upload deploy proof
         uses: actions/upload-artifact@v4
